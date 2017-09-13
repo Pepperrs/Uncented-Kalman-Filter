@@ -102,13 +102,24 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   if (!is_initialized_) {
 
     if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
-      // Todo: init x_
+
+      float ro = meas_package.raw_measurements_[0];
+      float theta = meas_package.raw_measurements_[1];
+
+      x_(0) = ro * cos(theta);
+      x_(1) = ro * sin(theta);
+
 
     } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
-      // Todo: init x_
+      x_(0) = meas_package.raw_measurements_[0];
+      x_(1) = meas_package.raw_measurements_[1];
     }
 
-    // Todo: init P_
+    P_ << 1, 0, 0, 0, 0,
+        0, 1, 0, 0, 0,
+        0, 0, 1000, 0, 0,
+        0, 0, 0, 1000, 0,
+        0, 0, 0, 0, 1000;
 
     time_us_ = meas_package.timestamp_;
     // done initializing, no need to predict or update
@@ -297,6 +308,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;
 
+  // ToDo: calculate NIS
 
 }
 
