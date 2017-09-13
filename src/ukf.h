@@ -68,6 +68,12 @@ public:
   double lambda_;
 
 
+  ///* H matrix for laser
+  MatrixXd H_;
+
+  ///* Covariance for Laser
+  MatrixXd R_;
+
   //create example vector for incoming radar measurement
   VectorXd z_;
 

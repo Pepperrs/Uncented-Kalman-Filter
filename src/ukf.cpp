@@ -53,6 +53,16 @@ UKF::UKF() {
   //define spreading parameter
   lambda_ = 3 - n_aug_;
 
+  // H Matrix for Lazer
+  H_ = MatrixXd(2,5);
+  H_ << 1,0,0,0,0,
+      0,1,0,0,0;
+
+  // R Matrix for Lazer
+  H_ = MatrixXd(2,2);
+  H_ << 0.0225,0,
+    0,0.0225;
+
   //set measurement dimension, radar can measure r, phi, and r_dot
   n_z_ = 3;
 
@@ -273,6 +283,21 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   You'll also need to calculate the lidar NIS.
   */
+
+
+  VectorXd y = z_ - H_ * x_;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S_ = H_ * P_ * Ht + R_;
+  MatrixXd Si = S_.inverse();
+  MatrixXd K = P_ * Ht * Si;
+
+  // new state
+  x_ = x_ + (K * y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
+
+
 }
 
 /**
