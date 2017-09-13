@@ -68,6 +68,25 @@ public:
   double lambda_;
 
 
+  //create example vector for incoming radar measurement
+  VectorXd z_;
+
+  //set measurement dimension, radar can measure r, phi, and r_dot
+  int n_z_;
+
+  //create example matrix with sigma points in measurement space
+  MatrixXd Zsig_;
+
+  //create example vector for mean predicted measurement
+  VectorXd z_pred_;
+
+  //create example matrix for predicted measurement covariance
+  MatrixXd S_;
+
+  //create matrix for cross correlation Tc_
+  MatrixXd Tc_;
+
+
   /**
    * Constructor
    */
