@@ -303,8 +303,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   You'll also need to calculate the lidar NIS.
   */
 
+  VectorXd z_ = meas_package.raw_measurements_;
 
-  VectorXd y = z_ - H_ * x_;
+  VectorXd y = z_- H_ * x_;
   MatrixXd Ht = H_.transpose();
   MatrixXd S_ = H_ * P_ * Ht + R_;
   MatrixXd Si = S_.inverse();
