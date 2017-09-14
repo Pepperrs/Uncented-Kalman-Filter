@@ -12,10 +12,10 @@ using std::vector;
  */
 UKF::UKF() {
   // if this is false, laser measurements will be ignored (except during init)
-  use_laser_ = false;
+  use_laser_ = true;
 
   // if this is false, radar measurements will be ignored (except during init)
-  use_radar_ = true;
+  use_radar_ = false;
 
   // initial state vector
   x_ = VectorXd(5);
@@ -24,10 +24,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 30; //change me. try 0.2
+  std_a_ = 0.2; //change me. try 0.2
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 30;  //change me. try 0.2
+  std_yawdd_ = 0.2;  //change me. try 0.2
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -147,7 +147,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     // Radar updates
     UpdateRadar(meas_package);
 
-  } else if(use_laser_){
+  } else if (meas_package.sensor_type_ == MeasurementPackage::LASER && use_laser_){
     // Laser updates
     UpdateLidar(meas_package);
 
@@ -306,6 +306,8 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   z_ = meas_package.raw_measurements_;
 
+  cout << z_ << endl;
+  cout << time_us_ << endl;
 
   VectorXd y = z_ - H_ * x_;
   MatrixXd Ht = H_.transpose();
