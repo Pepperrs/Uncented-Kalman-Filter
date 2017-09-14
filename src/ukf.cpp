@@ -12,10 +12,10 @@ using std::vector;
  */
 UKF::UKF() {
   // if this is false, laser measurements will be ignored (except during init)
-  use_laser_ = true;
+  use_laser_ = false;
 
   // if this is false, radar measurements will be ignored (except during init)
-  use_radar_ = false;
+  use_radar_ = true;
 
   // initial state vector
   x_ = VectorXd(5);
@@ -59,8 +59,8 @@ UKF::UKF() {
       0,1,0,0,0;
 
   // R Matrix for Lazer
-  H_ = MatrixXd(2,2);
-  H_ << 0.0225,0,
+  R_ = MatrixXd(2,2);
+  R_ << 0.0225,0,
     0,0.0225;
 
   //set measurement dimension, radar can measure r, phi, and r_dot
@@ -132,6 +132,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     time_us_ = meas_package.timestamp_;
     // done initializing, no need to predict or update
     is_initialized_ = true;
+    return;
 
   }
 
@@ -142,11 +143,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
 
   // Update
-  if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR && use_radar_) {
     // Radar updates
     UpdateRadar(meas_package);
 
-  } else {
+  } else if(use_laser_){
     // Laser updates
     UpdateLidar(meas_package);
 
@@ -303,9 +304,10 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   You'll also need to calculate the lidar NIS.
   */
 
-  VectorXd z_ = meas_package.raw_measurements_;
+  z_ = meas_package.raw_measurements_;
 
-  VectorXd y = z_- H_ * x_;
+
+  VectorXd y = z_ - H_ * x_;
   MatrixXd Ht = H_.transpose();
   MatrixXd S_ = H_ * P_ * Ht + R_;
   MatrixXd Si = S_.inverse();
@@ -326,6 +328,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
  * @param {MeasurementPackage} meas_package
  */
 void UKF::UpdateRadar(MeasurementPackage meas_package) {
+
+
+  z_ = meas_package.raw_measurements_;
 
   //transform sigma points into measurement space
   for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 simga points
