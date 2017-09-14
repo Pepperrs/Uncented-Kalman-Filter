@@ -15,7 +15,7 @@ UKF::UKF() {
   use_laser_ = true;
 
   // if this is false, radar measurements will be ignored (except during init)
-  use_radar_ = true;
+  use_radar_ = false;
 
   // initial state vector
   x_ = VectorXd(5);
@@ -81,6 +81,14 @@ UKF::UKF() {
   //create matrix for cross correlation Tc_
   Tc_ = MatrixXd(n_x_, n_z_);
 
+
+  // initialize Xsig_pred_
+  Xsig_pred_ = MatrixXd(n_x_, n_aug_*2+1);
+  Xsig_pred_.fill(0.0);
+
+
+  // initialize weights
+  weights_ = VectorXd(2*n_aug_+1);
   /**
   TODO:
 
@@ -175,7 +183,7 @@ void UKF::Prediction(double delta_t) {
 
 
   //create augmented mean state
-  x_aug_.head(5) = x_;
+  x_aug_.head(5) << x_;
   x_aug_(5) = 0;
   x_aug_(6) = 0;
 
