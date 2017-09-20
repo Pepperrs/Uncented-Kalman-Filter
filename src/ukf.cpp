@@ -24,10 +24,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 0.2; //change me. try 0.2
+  std_a_ = 4.8; //change me. try 0.2
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 0.2;  //change me. try 0.2
+  std_yawdd_ = 1.1*M_PI;// 0.63 //change me. try 0.2
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -89,13 +89,18 @@ UKF::UKF() {
 
   // initialize weights
   weights_ = VectorXd(2*n_aug_+1);
-  /**
-  TODO:
 
-  Complete the initialization. See ukf.h for other member properties.
 
-  Hint: one or more values initialized above might be wildly off...
-  */
+  //create augmented mean vector
+  x_aug_ = VectorXd(7);
+
+  //create augmented state covariance
+  P_aug_ = MatrixXd(7, 7);
+
+  //create sigma point matrix
+  Xsig_aug_ = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+
+
 }
 
 UKF::~UKF() {}
@@ -114,9 +119,12 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       float ro = meas_package.raw_measurements_[0];
       float theta = meas_package.raw_measurements_[1];
 
-      x_.fill(0.0);
+      //x_.fill(0.0);
       x_(0) = ro * cos(theta);
       x_(1) = ro * sin(theta);
+      x_(2) = 1;
+      x_(3) = 1;
+      x_(4) = 0;
 
 
     } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
@@ -124,15 +132,15 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       x_.fill(0.0);
       x_(0) = meas_package.raw_measurements_[0];
       x_(1) = meas_package.raw_measurements_[1];
+      x_(2) = 1;
+      x_(3) = 1;
+      x_(4) = 0;
     }
 
-    P_ << 1, 0, 0, 0, 0,
-        0, 1, 0, 0, 0,
-        0, 0, 1000, 0, 0,
-        0, 0, 0, 1000, 0,
-        0, 0, 0, 0, 1000;
+    P_ << P_.Identity(n_x_, n_x_);
 
     time_us_ = meas_package.timestamp_;
+
     // done initializing, no need to predict or update
     is_initialized_ = true;
     return;
@@ -142,6 +150,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
   // Prediction
   double delta_t = (meas_package.timestamp_ - time_us_) / 1000000.0;
+  time_us_ = meas_package.timestamp_;
   Prediction(delta_t);
 
 
@@ -155,6 +164,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     UpdateLidar(meas_package);
 
   }
+
+
+  // print the output
+  cout << "x_ = " << x_ << endl;
+  cout << "P_ = " << P_ << endl;
 }
 
 
@@ -176,14 +190,6 @@ void UKF::Prediction(double delta_t) {
    * Create augmented sigma points
    */
 
-  //create augmented mean vector
-  VectorXd x_aug_ = VectorXd(7);
-
-  //create augmented state covariance
-  MatrixXd P_aug_ = MatrixXd(7, 7);
-
-  //create sigma point matrix
-  MatrixXd Xsig_aug_ = MatrixXd(n_aug_, 2 * n_aug_ + 1);
 
 
   //create augmented mean state
@@ -229,7 +235,8 @@ void UKF::Prediction(double delta_t) {
 
     //avoid division by zero
     if (fabs(yawd) > 0.001) {
-      px_p = p_x + v/yawd * ( sin (yaw + yawd*delta_t) - sin(yaw));
+      //px_p = p_x + v/yawd * ( sin (yaw + yawd*delta_t) - sin(yaw));
+      px_p = p_x + v/yawd * ( sin (yaw + yaw*delta_t) - sin(yaw));
       py_p = p_y + v/yawd * ( cos(yaw) - cos(yaw+yawd*delta_t) );
     }
     else {
