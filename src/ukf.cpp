@@ -118,18 +118,22 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
       float ro = meas_package.raw_measurements_[0];
       float theta = meas_package.raw_measurements_[1];
+      float ro_dot = meas_package.raw_measurements_[2];
+
+      float vx = ro_dot*cos(theta);
+      float vy = ro_dot*sin(theta);
 
       //x_.fill(0.0);
       x_(0) = ro * cos(theta);
       x_(1) = ro * sin(theta);
-      x_(2) = 1;
+      x_(2) = sqrt(vx * vx + vy * vy);
       x_(3) = 1;
       x_(4) = 0;
 
 
     } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
 
-      x_.fill(0.0);
+      //x_.fill(0.0);
       x_(0) = meas_package.raw_measurements_[0];
       x_(1) = meas_package.raw_measurements_[1];
       x_(2) = 1;
@@ -235,8 +239,8 @@ void UKF::Prediction(double delta_t) {
 
     //avoid division by zero
     if (fabs(yawd) > 0.001) {
-      //px_p = p_x + v/yawd * ( sin (yaw + yawd*delta_t) - sin(yaw));
-      px_p = p_x + v/yawd * ( sin (yaw + yaw*delta_t) - sin(yaw));
+      px_p = p_x + v/yawd * ( sin (yaw + yawd*delta_t) - sin(yaw));
+      //px_p = p_x + v/yawd * ( sin (yaw + yaw*delta_t) - sin(yaw));
       py_p = p_y + v/yawd * ( cos(yaw) - cos(yaw+yawd*delta_t) );
     }
     else {
@@ -314,11 +318,15 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   You'll also need to calculate the lidar NIS.
   */
 
-  z_ = meas_package.raw_measurements_;
+  VectorXd z_lidar_ = VectorXd(2);
+  z_lidar_(0) = meas_package.raw_measurements_(0);
+  z_lidar_(1) = meas_package.raw_measurements_(1);
 
-  VectorXd y = z_ - H_ * x_;
+
+  VectorXd y = z_lidar_ - H_ * x_;
   MatrixXd Ht = H_.transpose();
-  MatrixXd S_ = H_ * P_ * Ht + R_;
+  MatrixXd P_Ht = P_ * Ht;
+  MatrixXd S_ = H_ * P_Ht + R_;
   MatrixXd Si = S_.inverse();
   MatrixXd K = P_ * Ht * Si;
 
